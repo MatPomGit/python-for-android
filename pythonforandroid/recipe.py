@@ -1,3 +1,12 @@
+"""
+Moduł recipe dla python-for-android
+====================================
+
+Ten moduł definiuje klasę Recipe i jej podklasy, które opisują jak pobierać,
+budować i instalować różne biblioteki dla Androida. Każdy "przepis" (recipe)
+zawiera instrukcje dotyczące budowania konkretnej biblioteki lub pakietu.
+"""
+
 from os.path import basename, dirname, exists, isdir, isfile, join, realpath, split
 import glob
 import hashlib
@@ -35,6 +44,10 @@ urllib.request.install_opener(url_opener)
 
 
 class RecipeMeta(type):
+    """
+    Metaklasa dla Recipe transformująca atrybuty 'url' i 'version' 
+    na prywatne atrybuty '_url' i '_version'.
+    """
     def __new__(cls, name, bases, dct):
         if name != 'Recipe':
             if 'url' in dct:
@@ -46,78 +59,87 @@ class RecipeMeta(type):
 
 
 class Recipe(metaclass=RecipeMeta):
+    """
+    Klasa bazowa dla przepisów budowania bibliotek dla Androida.
+    
+    Recipe zawiera metadane i instrukcje do pobierania, kompilowania
+    i instalowania biblioteki lub pakietu dla platformy Android.
+    Każdy konkretny przepis dziedziczy z tej klasy i nadpisuje
+    odpowiednie metody i atrybuty.
+    """
     _url = None
-    '''The address from which the recipe may be downloaded. This is not
-    essential, it may be omitted if the source is available some other
-    way, such as via the :class:`IncludedFilesBehaviour` mixin.
+    """Adres, z którego może być pobrany przepis. Nie jest to
+    konieczne, może być pominięte jeśli źródło jest dostępne w inny
+    sposób, np. przez mixin :class:`IncludedFilesBehaviour`.
 
-    If the url includes the version, you may (and probably should)
-    replace this with ``{version}``, which will automatically be
-    replaced by the :attr:`version` string during download.
+    Jeśli url zawiera wersję, możesz (i prawdopodobnie powinieneś)
+    zastąpić ją przez ``{version}``, która zostanie automatycznie
+    zastąpiona stringiem :attr:`version` podczas pobierania.
 
-    .. note:: Methods marked (internal) are used internally and you
-              probably don't need to call them, but they are available
-              if you want.
-    '''
+    .. note:: Metody oznaczone (internal) są używane wewnętrznie i
+              prawdopodobnie nie musisz ich wywoływać, ale są dostępne
+              jeśli chcesz.
+    """
 
     _download_headers = None
-    '''Add additional headers used when downloading the package, typically
-    for authorization purposes.
+    """Dodatkowe nagłówki używane przy pobieraniu pakietu, typowo
+    w celach autoryzacji.
 
-    Specified as an array of tuples:
+    Określone jako tablica krotek:
     [("header1", "foo"), ("header2", "bar")]
 
-    When specifying as an environment variable (DOWNLOAD_HEADER_my-package-name), use a JSON formatted fragement:
+    Przy określaniu jako zmienna środowiskowa (DOWNLOAD_HEADER_my-package-name), 
+    użyj fragmentu w formacie JSON:
     [["header1","foo"],["header2", "bar"]]
 
-    For example, when downloading from a private
-    github repository, you can specify the following:
-    [('Authorization', 'token <your personal access token>'), ('Accept', 'application/vnd.github+json')]
-    '''
+    Na przykład, przy pobieraniu z prywatnego repozytorium github,
+    możesz określić następujące:
+    [('Authorization', 'token <twój osobisty token dostępu>'), ('Accept', 'application/vnd.github+json')]
+    """
 
     _version = None
-    '''A string giving the version of the software the recipe describes,
-    e.g. ``2.0.3`` or ``master``.'''
+    """String podający wersję oprogramowania opisywanego przez przepis,
+    np. ``2.0.3`` lub ``master``."""
 
     md5sum = None
-    '''The md5sum of the source from the :attr:`url`. Non-essential, but
-    you should try to include this, it is used to check that the download
-    finished correctly.
-    '''
+    """Suma kontrolna md5 źródła z :attr:`url`. Nie jest konieczne, ale
+    powinieneś spróbować to uwzględnić, jest używane do sprawdzenia czy
+    pobieranie zakończyło się poprawnie.
+    """
 
     sha512sum = None
-    '''The sha512sum of the source from the :attr:`url`. Non-essential, but
-    you should try to include this, it is used to check that the download
-    finished correctly.
-    '''
+    """Suma kontrolna sha512 źródła z :attr:`url`. Nie jest konieczne, ale
+    powinieneś spróbować to uwzględnić, jest używane do sprawdzenia czy
+    pobieranie zakończyło się poprawnie.
+    """
 
     blake2bsum = None
-    '''The blake2bsum of the source from the :attr:`url`. Non-essential, but
-    you should try to include this, it is used to check that the download
-    finished correctly.
-    '''
+    """Suma kontrolna blake2b źródła z :attr:`url`. Nie jest konieczne, ale
+    powinieneś spróbować to uwzględnić, jest używane do sprawdzenia czy
+    pobieranie zakończyło się poprawnie.
+    """
 
     depends = []
-    '''A list containing the names of any recipes that this recipe depends on.
-    '''
+    """Lista zawierająca nazwy wszystkich przepisów, od których zależy ten przepis.
+    """
 
     conflicts = []
-    '''A list containing the names of any recipes that are known to be
-    incompatible with this one.'''
+    """Lista zawierająca nazwy przepisów, które są znane jako
+    niekompatybilne z tym."""
 
     opt_depends = []
-    '''A list of optional dependencies, that must be built before this
-    recipe if they are built at all, but whose presence is not essential.'''
+    """Lista opcjonalnych zależności, które muszą być zbudowane przed tym
+    przepisem jeśli w ogóle są budowane, ale których obecność nie jest konieczna."""
 
     patches = []
-    '''A list of patches to apply to the source. Values can be either a string
-    referring to the patch file relative to the recipe dir, or a tuple of the
-    string patch file and a callable, which will receive the kwargs `arch` and
-    `recipe`, which should return True if the patch should be applied.'''
+    """Lista łatek do zastosowania do źródła. Wartości mogą być albo stringiem
+    odnoszącym się do pliku łatki względem katalogu przepisu, albo krotką
+    zawierającą string pliku łatki i callable, który otrzyma kwargs `arch` i
+    `recipe` i powinien zwrócić True jeśli łatka powinna być zastosowana."""
 
     python_depends = []
-    '''A list of pure-Python packages that this package requires. These
-    packages will NOT be available at build time, but will be added to the
+    """Lista czystych pakietów Pythona, których ten pakiet wymaga. Te
+    pakiety NIE będą dostępne w czasie budowania, ale zostaną dodane do"""
     list of pure-Python packages to install via pip. If you need these packages
     at build time, you must create a recipe.'''
 

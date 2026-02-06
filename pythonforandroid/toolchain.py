@@ -1,9 +1,13 @@
 #!/usr/bin/env python
 """
-Tool for packaging Python apps for Android
-==========================================
+Narzędzie do pakowania aplikacji Pythona dla Androida
+======================================================
 
-This module defines the entry point for command line and programmatic use.
+Ten moduł definiuje punkt wejścia dla użycia z linii poleceń i programowego.
+
+python-for-android (p4a) umożliwia tworzenie aplikacji Android z kodu Python.
+Obsługuje kompilację krzyżową interpretera Python i zależności, a następnie
+pakowanie ich wraz z kodem aplikacji do plików APK, AAB lub AAR.
 """
 
 from appdirs import user_data_dir
@@ -55,6 +59,17 @@ sys.path.insert(0, join(toolchain_dir, "tools", "external"))
 
 def add_boolean_option(parser, names, no_names=None,
                        default=True, dest=None, description=None):
+    """
+    Dodaje parę opcji boolean do parsera argumentów (pozytywną i negatywną).
+    
+    Args:
+        parser: Parser argparse do dodania opcji
+        names: Nazwa(y) opcji pozytywnej
+        no_names: Nazwa(y) opcji negatywnej (opcjonalnie, domyślnie generowane)
+        default: Wartość domyślna opcji
+        dest: Nazwa docelowa dla argumentu (opcjonalnie)
+        description: Opis grupy opcji (opcjonalnie)
+    """
     group = parser.add_argument_group(description=description)
     if not isinstance(names, (list, tuple)):
         names = [names]
@@ -81,10 +96,17 @@ def add_boolean_option(parser, names, no_names=None,
 
 
 def require_prebuilt_dist(func):
-    """Decorator for ToolchainCL methods. If present, the method will
-    automatically make sure a dist has been built before continuing
-    or, if no dists are present or can be obtained, will raise an
-    error.
+    """
+    Dekorator dla metod ToolchainCL. Jeśli obecny, metoda automatycznie
+    upewni się, że dystrybucja została zbudowana przed kontynuowaniem,
+    lub jeśli żadna dystrybucja nie jest obecna lub nie może być uzyskana,
+    zgłosi błąd.
+    
+    Args:
+        func: Funkcja do dekorowania
+        
+    Returns:
+        Funkcja wrapper zapewniająca obecność dystrybucji
     """
 
     @wraps(func)
