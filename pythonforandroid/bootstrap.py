@@ -70,9 +70,13 @@ def _cmp_bootstraps_by_priority(a, b):
 
 
 class Bootstrap:
-    '''An Android project template, containing recipe stuff for
-    compilation and templated fields for APK info.
-    '''
+    """
+    Szablon projektu Android, zawierający przepisy do kompilacji 
+    i pola szablonowe dla informacji APK.
+    
+    Bootstrap definiuje strukturę projektu Android i sposób, w jaki
+    kod Pythona jest integrowany z aplikacją Android.
+    """
     jni_subdir = '/jni'
     ctx = None
 
@@ -82,23 +86,24 @@ class Bootstrap:
     dist_name = None
     distribution = None
 
-    # All bootstraps should include Python in some way:
+    # Wszystkie bootstrapy powinny w jakiś sposób zawierać Pythona:
     recipe_depends = ['python3', 'android']
 
     can_be_chosen_automatically = True
-    '''Determines whether the bootstrap can be chosen as one that
-    satisfies user requirements. If False, it will not be returned
-    from Bootstrap.get_bootstrap_from_recipes.
-    '''
+    """
+    Określa, czy bootstrap może być wybrany jako ten, który
+    spełnia wymagania użytkownika. Jeśli False, nie będzie zwrócony
+    z Bootstrap.get_bootstrap_from_recipes.
+    """
 
-    # Other things a Bootstrap might need to track (maybe separately):
+    # Inne rzeczy, które Bootstrap może potrzebować śledzić (może osobno):
     # ndk_main.c
     # whitelist.txt
     # blacklist.txt
 
     @property
     def dist_dir(self):
-        '''The dist dir at which to place the finished distribution.'''
+        """Katalog dist, w którym umieszczana jest gotowa dystrybucja."""
         if self.distribution is None:
             raise BuildInterruptingException(
                 'Internal error: tried to access {}.dist_dir, but {}.distribution '
@@ -110,9 +115,13 @@ class Bootstrap:
         return self.name + self.jni_subdir
 
     def check_recipe_choices(self):
-        '''Checks what recipes are being built to see which of the alternative
-        and optional dependencies are being used,
-        and returns a list of these.'''
+        """
+        Sprawdza jakie przepisy są budowane, aby zobaczyć, które z alternatywnych
+        i opcjonalnych zależności są używane, i zwraca listę tych przepisów.
+        
+        Returns:
+            list: Posortowana lista wybranych przepisów
+        """
         recipes = []
         built_recipes = self.ctx.recipe_build_order or []
         for recipe in self.recipe_depends:
@@ -140,9 +149,14 @@ class Bootstrap:
         return modname.split(".", 2)[-1]
 
     def get_bootstrap_dirs(self):
-        """get all bootstrap directories, following the MRO path"""
+        """
+        Pobiera wszystkie katalogi bootstrap, podążając ścieżką MRO.
+        
+        Returns:
+            list: Lista ścieżek do katalogów bootstrap
+        """
 
-        # get all bootstrap names along the __mro__, cutting off Bootstrap and object
+        # pobierz wszystkie nazwy bootstrap wzdłuż __mro__, odcinając Bootstrap i object
         classes = self.__class__.__mro__[:-2]
         bootstrap_names = [cls.name for cls in classes] + ['common']
         bootstrap_dirs = [

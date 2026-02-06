@@ -1,3 +1,11 @@
+"""
+Moduł graph dla python-for-android
+===================================
+
+Ten moduł zawiera funkcje do zarządzania grafem zależności receptur (recipes)
+i określania kolejności budowania przepisów na podstawie ich zależności.
+"""
+
 from copy import deepcopy
 from itertools import product
 
@@ -8,8 +16,15 @@ from pythonforandroid.util import BuildInterruptingException
 
 
 def fix_deplist(deps):
-    """ Turn a dependency list into lowercase, and make sure all entries
-        that are just a string become a tuple of strings
+    """
+    Przekształca listę zależności na małe litery i zapewnia,
+    że wszystkie wpisy są krotkami stringów.
+    
+    Args:
+        deps: Lista zależności (stringi lub listy/krotki stringów)
+        
+    Returns:
+        Lista krotek stringów w małych literach
     """
     deps = [
         ((dep.lower(),)
@@ -23,10 +38,23 @@ def fix_deplist(deps):
 
 
 class RecipeOrder(dict):
+    """
+    Słownik zawierający przepisy w kolejności budowania.
+    
+    Args:
+        ctx: Kontekst budowania zawierający konfigurację
+    """
     def __init__(self, ctx):
         self.ctx = ctx
 
     def conflicts(self):
+        """
+        Sprawdza czy którykolwiek przepis w kolejności ma konflikt
+        z innym przepisem.
+        
+        Returns:
+            bool: True jeśli są konflikty, False w przeciwnym razie
+        """
         for name in self.keys():
             try:
                 recipe = Recipe.get_recipe(name, self.ctx)
@@ -40,8 +68,16 @@ class RecipeOrder(dict):
 
 
 def get_dependency_tuple_list_for_recipe(recipe, blacklist=None):
-    """ Get the dependencies of a recipe with filtered out blacklist, and
-        turned into tuples with fix_deplist()
+    """
+    Pobiera zależności przepisu z odfiltrowaniem blacklisty
+    i przekształceniem na krotki przy użyciu fix_deplist().
+    
+    Args:
+        recipe: Obiekt Recipe, dla którego pobieramy zależności
+        blacklist: Zestaw nazw przepisów do pominięcia (opcjonalnie)
+        
+    Returns:
+        Lista krotek reprezentujących zależności
     """
     if blacklist is None:
         blacklist = set()
@@ -64,11 +100,21 @@ def get_dependency_tuple_list_for_recipe(recipe, blacklist=None):
 def recursively_collect_orders(
         name, ctx, all_inputs, orders=None, blacklist=None
         ):
-    '''For each possible recipe ordering, try to add the new recipe name
-    to that order. Recursively do the same thing with all the
-    dependencies of each recipe.
-
-    '''
+    """
+    Dla każdej możliwej kolejności przepisów, próbuje dodać nowy przepis
+    do tej kolejności. Rekurencyjnie robi to samo ze wszystkimi
+    zależnościami każdego przepisu.
+    
+    Args:
+        name: Nazwa przepisu do dodania
+        ctx: Kontekst budowania
+        all_inputs: Wszystkie przepisy wejściowe
+        orders: Lista istniejących kolejności (opcjonalnie)
+        blacklist: Zestaw przepisów do pominięcia (opcjonalnie)
+        
+    Returns:
+        Lista możliwych kolejności z dodanym przepisem
+    """
     name = name.lower()
     if orders is None:
         orders = []

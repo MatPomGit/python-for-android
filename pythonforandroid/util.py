@@ -1,3 +1,11 @@
+"""
+Moduł util dla python-for-android
+==================================
+
+Ten moduł zawiera funkcje pomocnicze używane w całym projekcie,
+w tym zarządzanie katalogami, operacje na plikach i weryfikację wersji.
+"""
+
 import contextlib
 from unittest import mock
 from fnmatch import fnmatch
@@ -18,13 +26,24 @@ LOGGER = logging.getLogger("p4a.util")
 build_platform = "{system}-{machine}".format(
     system=uname().system, machine=uname().machine
 ).lower()
-"""the build platform in the format `system-machine`. We use
-this string to define the right build system when compiling some recipes or
-to get the right path for clang compiler"""
+"""Platforma budowania w formacie `system-machine`. Używamy
+tego stringa do zdefiniowania właściwego systemu budowania podczas kompilacji
+niektórych przepisów lub do uzyskania właściwej ścieżki dla kompilatora clang"""
 
 
 @contextlib.contextmanager
 def current_directory(new_dir):
+    """
+    Menedżer kontekstu do tymczasowej zmiany katalogu roboczego.
+    
+    Args:
+        new_dir: Katalog, do którego przejść
+        
+    Yields:
+        None
+        
+    Po zakończeniu bloku with, przywraca oryginalny katalog.
+    """
     cur_dir = getcwd()
     logger.info(''.join((Err_Fore.CYAN, '-> directory context ', new_dir,
                          Err_Fore.RESET)))
@@ -37,6 +56,14 @@ def current_directory(new_dir):
 
 @contextlib.contextmanager
 def temp_directory():
+    """
+    Menedżer kontekstu tworzący katalog tymczasowy.
+    
+    Yields:
+        str: Ścieżka do utworzonego katalogu tymczasowego
+        
+    Katalog jest automatycznie usuwany po zakończeniu bloku with.
+    """
     temp_dir = mkdtemp()
     try:
         logger.debug(''.join((Err_Fore.CYAN, ' + temp directory used ',
@@ -49,20 +76,22 @@ def temp_directory():
 
 
 def walk_valid_filens(base_dir, invalid_dir_names, invalid_file_patterns, excluded_dir_exceptions=None):
-    """Recursively walks all the files and directories in ``dirn``,
-    ignoring directories that match any pattern in ``invalid_dirns``
-    and files that patch any pattern in ``invalid_filens``.
+    """
+    Rekurencyjnie przechodzi przez wszystkie pliki i katalogi w ``base_dir``,
+    ignorując katalogi pasujące do wzorców w ``invalid_dir_names``
+    i pliki pasujące do wzorców w ``invalid_file_patterns``.
 
-    ``invalid_dirns`` and ``invalid_filens`` should both be lists of
-    strings to match. ``invalid_dir_patterns`` expects a list of
-    invalid directory names, while ``invalid_file_patterns`` expects a
-    list of glob patterns compared against the full filepath.
+    Args:
+        base_dir: Bazowy katalog do przeszukania
+        invalid_dir_names: Lista nazw katalogów do zignorowania
+        invalid_file_patterns: Lista wzorców glob do porównania z pełną ścieżką pliku
+        excluded_dir_exceptions: Lista wyjątków - katalogi zawierające te stringi
+                                 nie będą wykluczać podkatalogów (opcjonalnie)
 
-    File and directory paths are evaluated as full paths relative to ``dirn``.
+    Ścieżki plików i katalogów są oceniane jako pełne ścieżki względne do ``base_dir``.
 
-    If ``excluded_dir_exceptions`` is given, any directory path that contains
-    any of those strings will *not* exclude subdirectories matching
-    ``invalid_dir_names``.
+    Yields:
+        tuple: (nazwa_pliku, pełna_ścieżka) dla każdego prawidłowego pliku
     """
 
     excluded_dir_exceptions = [] if excluded_dir_exceptions is None else excluded_dir_exceptions
