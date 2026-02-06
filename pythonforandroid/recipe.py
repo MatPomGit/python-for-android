@@ -1,11 +1,11 @@
-"""
+'''
 Moduł recipe dla python-for-android
 ====================================
 
 Ten moduł definiuje klasę Recipe i jej podklasy, które opisują jak pobierać,
 budować i instalować różne biblioteki dla Androida. Każdy "przepis" (recipe)
 zawiera instrukcje dotyczące budowania konkretnej biblioteki lub pakietu.
-"""
+'''
 
 from os.path import basename, dirname, exists, isdir, isfile, join, realpath, split
 import glob
@@ -44,10 +44,10 @@ urllib.request.install_opener(url_opener)
 
 
 class RecipeMeta(type):
-    """
+    '''
     Metaklasa dla Recipe transformująca atrybuty 'url' i 'version' 
     na prywatne atrybuty '_url' i '_version'.
-    """
+    '''
     def __new__(cls, name, bases, dct):
         if name != 'Recipe':
             if 'url' in dct:
@@ -59,16 +59,16 @@ class RecipeMeta(type):
 
 
 class Recipe(metaclass=RecipeMeta):
-    """
+    '''
     Klasa bazowa dla przepisów budowania bibliotek dla Androida.
     
     Recipe zawiera metadane i instrukcje do pobierania, kompilowania
     i instalowania biblioteki lub pakietu dla platformy Android.
     Każdy konkretny przepis dziedziczy z tej klasy i nadpisuje
     odpowiednie metody i atrybuty.
-    """
+    '''
     _url = None
-    """Adres, z którego może być pobrany przepis. Nie jest to
+    '''Adres, z którego może być pobrany przepis. Nie jest to
     konieczne, może być pominięte jeśli źródło jest dostępne w inny
     sposób, np. przez mixin :class:`IncludedFilesBehaviour`.
 
@@ -79,10 +79,10 @@ class Recipe(metaclass=RecipeMeta):
     .. note:: Metody oznaczone (internal) są używane wewnętrznie i
               prawdopodobnie nie musisz ich wywoływać, ale są dostępne
               jeśli chcesz.
-    """
+    '''
 
     _download_headers = None
-    """Dodatkowe nagłówki używane przy pobieraniu pakietu, typowo
+    '''Dodatkowe nagłówki używane przy pobieraniu pakietu, typowo
     w celach autoryzacji.
 
     Określone jako tablica krotek:
@@ -95,53 +95,53 @@ class Recipe(metaclass=RecipeMeta):
     Na przykład, przy pobieraniu z prywatnego repozytorium github,
     możesz określić następujące:
     [('Authorization', 'token <twój osobisty token dostępu>'), ('Accept', 'application/vnd.github+json')]
-    """
+    '''
 
     _version = None
-    """String podający wersję oprogramowania opisywanego przez przepis,
-    np. ``2.0.3`` lub ``master``."""
+    '''String podający wersję oprogramowania opisywanego przez przepis,
+    np. ``2.0.3`` lub ``master``.'''
 
     md5sum = None
-    """Suma kontrolna md5 źródła z :attr:`url`. Nie jest konieczne, ale
+    '''Suma kontrolna md5 źródła z :attr:`url`. Nie jest konieczne, ale
     powinieneś spróbować to uwzględnić, jest używane do sprawdzenia czy
     pobieranie zakończyło się poprawnie.
-    """
+    '''
 
     sha512sum = None
-    """Suma kontrolna sha512 źródła z :attr:`url`. Nie jest konieczne, ale
+    '''Suma kontrolna sha512 źródła z :attr:`url`. Nie jest konieczne, ale
     powinieneś spróbować to uwzględnić, jest używane do sprawdzenia czy
     pobieranie zakończyło się poprawnie.
-    """
+    '''
 
     blake2bsum = None
-    """Suma kontrolna blake2b źródła z :attr:`url`. Nie jest konieczne, ale
+    '''Suma kontrolna blake2b źródła z :attr:`url`. Nie jest konieczne, ale
     powinieneś spróbować to uwzględnić, jest używane do sprawdzenia czy
     pobieranie zakończyło się poprawnie.
-    """
+    '''
 
     depends = []
-    """Lista zawierająca nazwy wszystkich przepisów, od których zależy ten przepis.
-    """
+    '''Lista zawierająca nazwy wszystkich przepisów, od których zależy ten przepis.
+    '''
 
     conflicts = []
-    """Lista zawierająca nazwy przepisów, które są znane jako
-    niekompatybilne z tym."""
+    '''Lista zawierająca nazwy przepisów, które są znane jako
+    niekompatybilne z tym.'''
 
     opt_depends = []
-    """Lista opcjonalnych zależności, które muszą być zbudowane przed tym
-    przepisem jeśli w ogóle są budowane, ale których obecność nie jest konieczna."""
+    '''Lista opcjonalnych zależności, które muszą być zbudowane przed tym
+    przepisem jeśli w ogóle są budowane, ale których obecność nie jest konieczna.'''
 
     patches = []
-    """Lista łatek do zastosowania do źródła. Wartości mogą być albo stringiem
+    '''Lista łatek do zastosowania do źródła. Wartości mogą być albo stringiem
     odnoszącym się do pliku łatki względem katalogu przepisu, albo krotką
     zawierającą string pliku łatki i callable, który otrzyma kwargs `arch` i
-    `recipe` i powinien zwrócić True jeśli łatka powinna być zastosowana."""
+    `recipe` i powinien zwrócić True jeśli łatka powinna być zastosowana.'''
 
     python_depends = []
-    """Lista czystych pakietów Pythona, których ten pakiet wymaga. Te
-    pakiety NIE będą dostępne w czasie budowania, ale zostaną dodane do"""
-    list of pure-Python packages to install via pip. If you need these packages
-    at build time, you must create a recipe.'''
+    '''Lista czystych pakietów Pythona, których ten pakiet wymaga. Te
+    pakiety NIE będą dostępne w czasie budowania, ale zostaną dodane do
+    listy czystych pakietów Pythona do zainstalowania przez pip. Jeśli potrzebujesz
+    tych pakietów w czasie budowania, musisz stworzyć przepis.'''
 
     archs = ['armeabi']  # Not currently implemented properly
 
@@ -1560,10 +1560,10 @@ class TargetPythonRecipe(Recipe):
         raise NotImplementedError('{} does not implement create_python_bundle'.format(self))
 
     def reduce_object_file_names(self, dirn):
-        """Recursively renames all files named XXX.cpython-...-linux-gnu.so"
+        '''Recursively renames all files named XXX.cpython-...-linux-gnu.so
         to "XXX.so", i.e. removing the erroneous architecture name
         coming from the local system.
-        """
+        '''
         py_so_files = shprint(sh.find, dirn, '-iname', '*.so')
         filens = py_so_files.stdout.decode('utf-8').split('\n')[:-1]
         for filen in filens:
