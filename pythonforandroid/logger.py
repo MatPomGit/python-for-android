@@ -68,9 +68,18 @@ class colorama_shim:
     
     Pozwala kontrolować, czy kolory są włączone czy wyłączone w runtime,
     zwracając puste stringi gdy są wyłączone.
+    
+    Args:
+        real: Obiekt colorama (Style lub Fore) do opakowywania
     """
 
     def __init__(self, real):
+        """
+        Inicjalizuje colorama_shim.
+        
+        Args:
+            real: Rzeczywisty obiekt colorama do użycia gdy kolory są włączone
+        """
         self._dict = defaultdict(str)
         self._real = real
         self._enabled = False
