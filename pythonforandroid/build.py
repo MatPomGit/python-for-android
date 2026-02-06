@@ -113,7 +113,7 @@ class Context:
     build_dir = None
 
     distribution = None
-    """Obiekt Distribution reprezentujący bieżącą lokalizację docelową budowania."""
+    """Obiekt Distribution reprezentujący aktualną lokalizację docelową budowania."""
 
     # folder projektu Android gdzie wszystko trafia
     dist_dir = None
