@@ -1,3 +1,11 @@
+"""
+Moduł logger dla python-for-android
+====================================
+
+Ten moduł zawiera konfigurację logowania i funkcje pomocnicze do formatowania
+i wyświetlania komunikatów podczas budowania aplikacji Android.
+"""
+
 import logging
 import os
 import re
@@ -8,11 +16,17 @@ from collections import defaultdict
 from colorama import Style as Colo_Style, Fore as Colo_Fore
 
 
-# monkey patch to show full output
+# monkey patch aby wyświetlić pełny output
 sh.ErrorReturnCode.truncate_cap = 999999
 
 
 class LevelDifferentiatingFormatter(logging.Formatter):
+    """
+    Formatter logów różnicujący poziomy logowania przez kolorowanie.
+    
+    Formatuje komunikaty w zależności od poziomu (ERROR, WARNING, INFO, DEBUG)
+    dodając odpowiednie prefiksy i kolory.
+    """
     def format(self, record):
         if record.levelno > 30:
             record.msg = '{}{}[ERROR]{}{}:   '.format(
@@ -33,8 +47,8 @@ class LevelDifferentiatingFormatter(logging.Formatter):
 
 
 logger = logging.getLogger('p4a')
-# Necessary as importlib reloads this,
-# which would add a second handler and reset the level
+# Konieczne, ponieważ importlib przeładowuje to,
+# co dodałoby drugi handler i zresetowało poziom
 if not hasattr(logger, 'touched'):
     logger.setLevel(logging.INFO)
     logger.touched = True
@@ -49,8 +63,23 @@ error = logger.error
 
 
 class colorama_shim:
+    """
+    Klasa pośrednia dla colorama umożliwiająca włączanie/wyłączanie kolorowania.
+    
+    Pozwala kontrolować, czy kolory są włączone czy wyłączone w runtime,
+    zwracając puste stringi gdy są wyłączone.
+    
+    Args:
+        real: Obiekt colorama (Style lub Fore) do opakowywania
+    """
 
     def __init__(self, real):
+        """
+        Inicjalizuje colorama_shim.
+        
+        Args:
+            real: Rzeczywisty obiekt colorama do użycia gdy kolory są włączone
+        """
         self._dict = defaultdict(str)
         self._real = real
         self._enabled = False
@@ -69,6 +98,13 @@ Err_Fore = colorama_shim(Colo_Fore)
 
 
 def setup_color(color):
+    """
+    Konfiguruje kolorowanie wyjścia na podstawie preferencji użytkownika.
+    
+    Args:
+        color: 'never' (brak kolorów), 'always' (zawsze kolory), 
+               lub 'auto' (kolory jeśli terminal je wspiera)
+    """
     enable_out = (False if color == 'never' else
                   True if color == 'always' else
                   stdout.isatty())
@@ -83,19 +119,29 @@ def setup_color(color):
 
 
 def info_main(*args):
+    """Wyświetla główną informację z pogrubieniem i zielonym kolorem."""
     logger.info(''.join([Err_Style.BRIGHT, Err_Fore.GREEN] + list(args) +
                         [Err_Style.RESET_ALL, Err_Fore.RESET]))
 
 
 def info_notify(s):
+    """Wyświetla powiadomienie z jasnoniebieskim kolorem."""
     info('{}{}{}{}'.format(Err_Style.BRIGHT, Err_Fore.LIGHTBLUE_EX, s,
                            Err_Style.RESET_ALL))
 
 
 def shorten_string(string, max_width):
-    ''' make limited length string in form:
-      "the string is very lo...(and 15 more)"
-    '''
+    """
+    Tworzy skrócony string o ograniczonej długości w formie:
+    "the string is very lo...(and 15 more)"
+    
+    Args:
+        string: String do skrócenia
+        max_width: Maksymalna szerokość wyniku
+        
+    Returns:
+        Skrócony string lub oryginalny, jeśli mieści się w limicie
+    """
     string_len = len(string)
     if string_len <= max_width:
         return string
@@ -110,6 +156,15 @@ def shorten_string(string, max_width):
 
 
 def get_console_width():
+    """
+    Pobiera szerokość konsoli w kolumnach.
+    
+    Próbuje różnych metod wykrycia szerokości konsoli.
+    Zwraca 100 jako wartość domyślną jeśli wykrycie się nie powiedzie.
+    
+    Returns:
+        int: Szerokość konsoli w kolumnach (minimum 25)
+    """
     try:
         cols = int(os.environ['COLUMNS'])
     except (KeyError, ValueError):
@@ -129,8 +184,25 @@ def get_console_width():
 
 
 def shprint(command, *args, **kwargs):
-    '''Runs the command (which should be an sh.Command instance), while
-    logging the output.'''
+    """
+    Uruchamia komendę (która powinna być instancją sh.Command), 
+    jednocześnie logując output.
+    
+    Args:
+        command: Instancja sh.Command do uruchomienia
+        *args: Argumenty dla komendy
+        **kwargs: Dodatkowe opcje:
+            _critical: Jeśli True, kończy program przy błędzie
+            _tail: Liczba linii do wyświetlenia z końca outputu przy błędzie
+            _filter: Regex filtr do wyświetlania tylko pasujących linii
+            _filterout: Regex filtr do pomijania pasujących linii
+    
+    Returns:
+        Output komendy
+        
+    Raises:
+        sh.ErrorReturnCode: Jeśli komenda zawiedzie i _critical nie jest True
+    """
     kwargs["_iter"] = True
     kwargs["_out_bufsize"] = 1
     kwargs["_err_to_out"] = True

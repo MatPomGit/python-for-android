@@ -1,3 +1,12 @@
+"""
+Moduł build dla python-for-android
+===================================
+
+Ten moduł zawiera logikę budowania dla python-for-android.
+Definiuje klasę Context, która przechowuje stan środowiska budowania,
+oraz funkcje do budowania przepisów i zarządzania zależnościami.
+"""
+
 from contextlib import suppress
 import copy
 import glob
@@ -32,6 +41,18 @@ from pythonforandroid.util import (
 
 
 def get_targets(sdk_dir):
+    """
+    Pobiera listę dostępnych targetów Android SDK.
+    
+    Args:
+        sdk_dir: Ścieżka do katalogu Android SDK
+        
+    Returns:
+        list: Lista dostępnych targetów jako stringi
+        
+    Raises:
+        BuildInterruptingException: Jeśli narzędzia SDK nie zostały znalezione
+    """
     if exists(join(sdk_dir, 'cmdline-tools', 'latest', 'bin', 'avdmanager')):
         avdmanager = sh.Command(join(sdk_dir, 'cmdline-tools', 'latest', 'bin', 'avdmanager'))
         targets = avdmanager('list', 'target').split('\n')
@@ -50,6 +71,15 @@ def get_targets(sdk_dir):
 
 
 def get_available_apis(sdk_dir):
+    """
+    Pobiera listę dostępnych poziomów API Android z SDK.
+    
+    Args:
+        sdk_dir: Ścieżka do katalogu Android SDK
+        
+    Returns:
+        list: Lista dostępnych poziomów API jako liczby całkowite
+    """
     targets = get_targets(sdk_dir)
     apis = [s for s in targets if re.match(r'^ *API level: ', s)]
     apis = [re.findall(r'[0-9]+', s) for s in apis]
@@ -58,35 +88,40 @@ def get_available_apis(sdk_dir):
 
 
 class Context:
-    '''A build context. If anything will be built, an instance this class
-    will be instantiated and used to hold all the build state.'''
+    """
+    Kontekst budowania. Jeśli cokolwiek będzie budowane, instancja tej klasy
+    zostanie utworzona i użyta do przechowywania całego stanu budowania.
+    
+    Zawiera konfigurację środowiska, ścieżki do narzędzi, architektury docelowe,
+    oraz metody do zarządzania procesem budowania aplikacji Android.
+    """
 
-    # Whether to make a debug or release build
+    # Czy tworzyć build debug czy release
     build_as_debuggable = False
 
-    # Whether to strip debug symbols in `.so` files
+    # Czy usuwać symbole debug w plikach `.so`
     with_debug_symbols = False
 
     env = environ.copy()
-    # the filepath of toolchain.py
+    # ścieżka pliku toolchain.py
     root_dir = None
-    # the root dir where builds and dists will be stored
+    # katalog główny gdzie będą przechowywane buildy i dystrybucje
     storage_dir = None
 
-    # in which bootstraps are copied for building
-    # and recipes are built
+    # katalog w którym bootstrapy są kopiowane do budowania
+    # i przepisy są budowane
     build_dir = None
 
     distribution = None
-    """The Distribution object representing the current build target location."""
+    """Obiekt Distribution reprezentujący aktualną lokalizację docelową budowania."""
 
-    # the Android project folder where everything ends up
+    # folder projektu Android gdzie wszystko trafia
     dist_dir = None
 
-    # Whether setup.py or similar should be used if present:
+    # Czy setup.py lub podobne powinno być użyte jeśli obecne:
     use_setup_py = False
 
-    ccache = None  # whether to use ccache
+    ccache = None  # czy używać ccache
 
     ndk = None
 
